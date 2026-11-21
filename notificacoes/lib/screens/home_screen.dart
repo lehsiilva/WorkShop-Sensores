@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/notification_service.dart';
+import '../widgets/painel_gps.dart';
 
 /// Tela única do app (Pessoa 6): um bloco por parte do workshop,
 /// na mesma ordem da apresentação.
@@ -21,6 +22,8 @@ class HomeScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // Pessoa 3: Geolocalização (GPS)
+          const PainelGps(),
           _Secao(
             titulo: '1. Permissão',
             subtitulo: 'POST_NOTIFICATIONS (Android 13+) e iOS',

@@ -16,10 +16,6 @@ class NotificationService {
   // Instância global do plugin
   final FlutterLocalNotificationsPlugin plugin = FlutterLocalNotificationsPlugin();
 
-  // =========================================================================
-  // PESSOA 2: Inicialização e Permissões (SUA PARTE)
-  // =========================================================================
-
   /// Configura as definições iniciais para Android e iOS
   Future<void> initialize() async {
     const AndroidInitializationSettings initializationSettingsAndroid =
