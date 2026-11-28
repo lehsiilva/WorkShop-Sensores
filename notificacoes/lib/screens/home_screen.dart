@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/notification_service.dart';
+import '../widgets/painel_bateria.dart';
 import '../widgets/painel_gps.dart';
 
 /// Tela única do app (Pessoa 6): um bloco por parte do workshop,
@@ -24,6 +25,11 @@ class HomeScreen extends StatelessWidget {
         children: [
           // Pessoa 3: Geolocalização (GPS)
           const PainelGps(),
+          // Pessoa 5: Bateria e ciclo de vida (leitura contínua do GPS)
+          // Mesmo padrão do PainelGps: o painel cria o próprio serviço.
+          // Quando o SensorService compilar, a Pessoa 6 pode trocar por
+          // PainelBateria(service: SensorService.instance.bateria).
+          const PainelBateria(),
           _Secao(
             titulo: '1. Permissão',
             subtitulo: 'POST_NOTIFICATIONS (Android 13+) e iOS',
