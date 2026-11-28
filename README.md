@@ -17,7 +17,8 @@ O app demonstra:
 - GPS, leitura única (Pessoa 3): `GpsService` + `PainelGps`, que já aparece na tela inicial.
 - Sensores de movimento (Pessoa 4): `MovimentoService` + `PainelMovimento`.
 - Permissões (Pessoa 2): `LocationPermissionService` + `PermissionPanel`.
-- Ponto central (Pessoa 1): `SensorService`, que delega para os três serviços acima.
+- Bateria e ciclo de vida (Pessoa 5): `BateriaService` + `PainelBateria`, que já aparece na tela inicial (leitura contínua com `getPositionStream`, precisão, `distanceFilter`, intervalo, contador e pausa em segundo plano). Teoria, demo e slides em [`docs/pessoa5-bateria.md`](docs/pessoa5-bateria.md).
+- Ponto central (Pessoa 1): `SensorService`, que delega para os serviços acima.
 
 **O que NÃO compila hoje** (`flutter analyze`)
 
@@ -33,7 +34,7 @@ O app demonstra:
 
 - `PainelMovimento` e `PermissionPanel` não estão na tela inicial (`HomeScreen`).
 - Faltam as permissões de localização no Android e no iOS (veja abaixo).
-- Bateria e ciclo de vida (Pessoa 5): ainda não há leitura contínua do GPS (`getPositionStream` com `distanceFilter`) nem pausa dos sensores quando o app vai para segundo plano.
+- O `PainelMovimento` (Pessoa 4) ainda não pausa os sensores quando o app vai para segundo plano; o mesmo padrão do `PainelBateria` (`WidgetsBindingObserver`) pode ser reaproveitado.
 
 ## Como executar
 
@@ -65,12 +66,14 @@ notificacoes/lib/
     sensor_service.dart                      # Pessoa 1: ponto central, só delega
     location_permition_service.dart          # Pessoa 2: permissões de localização
     gps_service.dart                         # Pessoa 3: GPS
+    bateria_service.dart                     # Pessoa 5: leitura contínua e ciclo de vida
     movimento_service.dart                   # Pessoa 4: acelerômetro, giroscópio, magnetômetro
     notification_service.dart                # resto do workshop de notificações
   widgets/                                   # um painel (Card) por parte
     painel_permissao.dart                    # Pessoa 2
     painel_gps.dart                          # Pessoa 3
     painel_movimento.dart                    # Pessoa 4
+    painel_bateria.dart                      # Pessoa 5
 ```
 
 Regra da arquitetura: os **services** fazem o trabalho e os **widgets** só mostram o resultado.
@@ -84,7 +87,7 @@ O `SensorService.instance` reúne os services num único lugar, sem duplicar a l
 | 2 | Permissões | Thayná Andrade | `LocationPermissionService`: `check`, `request`, `ensureGranted`, `openAppSettings`, `openLocationSettings`; `enum LocationAccess`; `PermissionPanel` |
 | 3 | Geolocalização | Lucas Reis | `GpsService`: `obterLocalizacaoAtual`, `calcularDistanciaMetros`, `formatarDistancia`; `GpsException`; `PainelGps` |
 | 4 | Sensores de movimento | Letícia Lopes | `MovimentoService`: `acelerometro`, `giroscopio`, `magnetometro`, `forcaG`, `direcaoGraus`, `pontoCardeal`; `DetectorChacoalhar.processar`; `PainelMovimento` |
-| 5 | Bateria e ciclo de vida | A definir | (nada implementado ainda; há um bloco `TODO Pessoa 5` em `sensor_service.dart`) |
+| 5 | Bateria e ciclo de vida | Luis Felipe Rodrigues Almeida | `BateriaService`: `iniciar`, `parar`, `pausar`, `retomar`, `mudarConfig`; `ConfigLeitura` (`altaPrecisao`, `economia`, `custoEstimado`); `EstadoLeitura`; `RodadaLeitura`; `PainelBateria`. No `SensorService`: `iniciarLeituraContinua`, `pausarLeituras`, `retomarLeituras`, `pararTudo` |
 | 6 | Integração, UI e demo | A definir | `HomeScreen`, `main.dart` |
 
 ## Requisitos do professor
@@ -94,7 +97,7 @@ O `SensorService.instance` reúne os services num único lugar, sem duplicar a l
 | Ler pelo menos 2 sensores | Pessoa 3 (GPS) e Pessoa 4 (acelerômetro, giroscópio, magnetômetro) | Código pronto; o `PainelMovimento` ainda não está na tela |
 | Fluxo de permissão, incluindo recusa | Pessoa 2 | Código trata negada, negada para sempre e GPS desligado; ainda não compila e não está na tela |
 | Funcionar no emulador ou no aparelho | Pessoa 6 (integração) | Bloqueado pelos erros de compilação e pelas permissões que faltam |
-| Custo de bateria da leitura contínua | Pessoa 5 | Pendente (hoje só o `PainelMovimento` cancela os streams ao desligar) |
+| Custo de bateria da leitura contínua | Pessoa 5 | Código pronto: `PainelBateria` compara configurações e cancela/pausa o stream do GPS |
 | README com instruções de execução | Pessoa 1 | Este arquivo |
 
 ## Permissões necessárias
@@ -147,7 +150,12 @@ Os passos marcados com (*) dependem de o painel ser colocado na tela inicial pel
    2. Inclinar o aparelho: o nível de bolha se move.
    3. Girar o aparelho: a bússola acompanha.
    4. Chacoalhar o aparelho: aparece "Chacoalhou!".
-4. **Bateria**: desligar **Ler sensores em tempo real** e explicar que isso cancela os streams. A parte da Pessoa 5 ainda está pendente.
+4. **Bateria**, no `PainelBateria` (já está na tela; roteiro completo em [`docs/pessoa5-bateria.md`](docs/pessoa5-bateria.md)):
+   1. No emulador, *Extended controls* > *Location* > *Routes*: carregar uma rota e dar play.
+   2. Tocar em **Alta precisão** e ligar **Leitura contínua do GPS**: o contador sobe quase a cada segundo (custo Alto).
+   3. Tocar em **Economia**: a rodada vai para o *Comparativo das rodadas* e o contador sobe bem mais devagar.
+   4. Apertar Home e voltar: o estado mostra *Pausada* e o contador de **Pausas** sobe (o stream foi cancelado).
+   5. Desligar o interruptor e, no `PainelMovimento`, desligar **Ler sensores em tempo real**: nenhum stream aberto.
 
 ## Pendências
 
@@ -160,7 +168,6 @@ Os passos marcados com (*) dependem de o painel ser colocado na tela inicial pel
 - **Sugestão para a Pessoa 2 (Thayná) decidir:** renomear `location_permition_service.dart` para `location_permission_service.dart`, que é o nome que o `painel_permissao.dart` já espera. Se renomear, ajustar também o import em `sensor_service.dart`.
 - Corrigir os erros de compilação listados em [Estado atual](#estado-atual).
 - Colocar `PermissionPanel` e `PainelMovimento` na `HomeScreen` (Pessoa 6).
-- Implementar a parte da Pessoa 5 (bloco `TODO Pessoa 5` em `sensor_service.dart`).
 
 ## Referências
 

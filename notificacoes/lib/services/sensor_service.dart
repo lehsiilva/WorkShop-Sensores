@@ -6,6 +6,7 @@
 import 'package:geolocator/geolocator.dart'; // tipo Position (GPS)
 import 'package:sensors_plus/sensors_plus.dart'; // tipos dos eventos dos sensores
 
+import 'bateria_service.dart'; // Pessoa 5
 import 'gps_service.dart'; // Pessoa 3
 // Nome do arquivo mantido como está hoje (com "permition"); renomear é decisão da Pessoa 2.
 import 'location_permition_service.dart'; // Pessoa 2
@@ -23,6 +24,7 @@ class SensorService {
   final LocationPermissionService permissao = LocationPermissionService(); // Pessoa 2
   final GpsService gps = GpsService(); // Pessoa 3
   final MovimentoService movimento = MovimentoService(); // Pessoa 4
+  final BateriaService bateria = BateriaService(); // Pessoa 5
 
   // =========================================================================
   // PESSOA 2 (Thayná): Permissões
@@ -72,12 +74,21 @@ class SensorService {
   Stream<MagnetometerEvent> magnetometro() => movimento.magnetometro();
 
   // =========================================================================
-  // PESSOA 5 (a definir): Bateria e ciclo de vida
+  // PESSOA 5 (Luis Felipe): Bateria e ciclo de vida
   // =========================================================================
-  // TODO Pessoa 5: nada implementado ainda. Nomes sugeridos (ajuste à vontade):
-  //   Stream<Position> posicaoEmTempoReal({int distanceFilter})
-  //       -> leitura contínua do GPS com distanceFilter (economia de bateria)
-  //   void pausarLeituras()   -> chamado quando o app vai para segundo plano
-  //   void retomarLeituras()  -> chamado quando o app volta para a tela
-  //   Future<void> pararTudo() -> cancela todas as assinaturas (streams)
+
+  /// Pessoa 5: liga a leitura contínua do GPS (getPositionStream) com a
+  /// precisão, o distanceFilter e o intervalo escolhidos.
+  Future<void> iniciarLeituraContinua({ConfigLeitura? config}) =>
+      bateria.iniciar(config: config);
+
+  /// Pessoa 5: app foi para segundo plano. Cancela o stream do GPS, mas
+  /// lembra que o usuário queria a leitura ligada.
+  Future<void> pausarLeituras() => bateria.pausar();
+
+  /// Pessoa 5: app voltou para a tela. Reabre o stream se estava pausado.
+  Future<void> retomarLeituras() => bateria.retomar();
+
+  /// Pessoa 5: cancela todas as assinaturas de GPS abertas pela Pessoa 5.
+  Future<void> pararTudo() => bateria.parar();
 }
